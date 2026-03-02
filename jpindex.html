@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>論文ノート：深層漸進的収縮学習 (DPSL)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; min-height: 100vh; background-color: #fff; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+        .sidebar { width: 280px; background-color: #f6f8fa; border-right: 1px solid #d0d7de; position: fixed; height: 100vh; overflow-y: auto; padding: 24px; box-sizing: border-box; top: 0; left: 0; z-index: 100; }
+        .sidebar h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #24292f; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { text-decoration: none; color: #57606a; font-size: 14px; display: block; padding: 4px 0; transition: color 0.2s; }
+        .sidebar a:hover { color: #0969da; text-decoration: underline; }
+        .sidebar .sub-menu { margin-left: 20px; margin-top: 4px; font-size: 13px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px 60px; max-width: 1000px; }
+        html { scroll-behavior: smooth; }
+        div[align="center"] { text-align: center; margin: 20px 0; }
+        table { display: block; width: 100%; overflow: auto; }
+        @media (max-width: 900px) {
+            body { display: block; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #d0d7de; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>目次</h2>
+        <ul>
+            <li><a href="#1-研究背景">1. 研究背景</a></li>
+            <li><a href="#2-問題提起">2. 問題提起：クラス内分散と特徴重複</a></li>
+            <li>
+                <a href="#3-方法論">3. 方法論：DPSL</a>
+                <ul class="sub-menu">
+                    <li><a href="#31-特徴レベル収縮">3.1 特徴レベル収縮</a></li>
+                    <li><a href="#32-決定レベル収縮">3.2 決定レベル収縮</a></li>
+                </ul>
+            </li>
+            <li><a href="#4-実験検証">4. 実験検証</a></li>
+            <li><a href="#5-結論">5. 結論</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content markdown-body">
+        
+        <h1>論文ノート：深層漸進的収縮学習 (Deep Progressive Shrinkage Learning, DPSL)</h1>
+
+        <blockquote>
+            <p>強ノイズ環境下における機械複合故障診断の際の特徴重複問題に対処</p>
+            <p><strong>Paper Title:</strong> Mechanical compound fault diagnosis via suppressing intra-class dispersions: A deep progressive shrinkage perspective</p>
+            <p><strong>Journal:</strong> <em>Measurement</em> (Elsevier), Vol. 199, 2022</p>
+            <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.measurement.2022.111433">10.1016/j.measurement.2022.111433</a></p>
+        </blockquote>
+
+        <p>
+            <img src="https://img.shields.io/badge/Journal-Measurement-blue" alt="Journal"> 
+            <img src="https://img.shields.io/badge/DOI-10.1016%2Fj.measurement.2022.111433-green" alt="DOI"> 
+            <img src="https://img.shields.io/badge/Topic-Deep_Learning-orange" alt="Topic"> 
+            <img src="https://img.shields.io/badge/Topic-Fault_Diagnosis-yellow" alt="Topic">
+        </p>
+
+        <hr>
+
+        <h2 id="1-研究背景">1. 研究背景</h2>
+        <p>回転機械の故障診断タスクにおいて、複合故障（Compound Faults）とは、2つ以上の単一故障が同時に発生する状況（例：ベアリングの内輪と外輪が同時に損傷するなど）を指します。単一故障と比較して、複合故障の振動信号の特徴はより複雑です。従来の深層学習手法は単一故障の処理には優れていますが、強ノイズ干渉下で複合故障を識別する場合、精度が制限されることがよくあります。</p>
+
+        <h2 id="2-問題提起">2. 問題提起：クラス内分散と特徴重複</h2>
+        <p>論文では、複合故障診断の主な難点は特徴空間における**クラス間重複（Inter-class overlap）**にあるとしています。この現象の主な原因は以下の2点です：</p>
+        <ol>
+            <li><strong>複合故障の結合性</strong>：複合故障は単一故障の特徴成分を含むため、特徴空間での分布が関連する単一故障と非常に類似します。</li>
+            <li><strong>ノイズによるクラス内分散（Intra-class dispersion）</strong>：産業現場の強いバックグラウンドノイズにより、同一クラスの故障サンプルの特徴分布が散漫になります。高いクラス内分散は、異なるクラス間の特徴境界を曖昧にし、重複を引き起こします。</li>
+        </ol>
+        <p>したがって、診断精度を向上させるためには、「ノイズ干渉の排除」と「クラス内分散の抑制」を同時に実現する必要があります。</p>
+
+        <div align="center">
+          <img width="90%" src="https://github.com/user-attachments/assets/d1ed046d-9ff9-49b8-bdc7-e893a54e22e1" />
+          <p><em>図1 サンプル分布の模式図</em></p>
+        </div>
+
+        <h2 id="3-方法論">3. 方法論：深層漸進的収縮学習 (DPSL)</h2>
+        <p>上記の問題に対処するため、論文では特徴レベルと決定レベルの2つの層での収縮戦略を通じて特徴分布を最適化するDPSLフレームワークを構築しました。</p>
+
+        <div align="center">
+          <img width="60%" src="https://github.com/user-attachments/assets/b8911a48-c812-49a8-8154-5e31e9f9c67f" />
+          <p><em>図2 DPSLの全体アーキテクチャ</em></p>
+        </div>
+
+        <h3 id="31-特徴レベル収縮">3.1 特徴レベル収縮：適応型ソフト閾値ノイズ除去</h3>
+        <p>特徴抽出段階において、本手法は**残差収縮構築ユニット (Residual Shrinkage Building Unit, RSBU)**を導入しています。</p>
+        <ul>
+            <li><strong>メカニズム</strong>：ソフト閾値（Soft Thresholding）関数を非線形層として利用します。</li>
+            <li><strong>原理</strong>：ソフト閾値関数は、閾値未満の絶対値を持つ特徴をゼロにします（これらは通常ノイズに対応します）。閾値を超える絶対値を持つ特徴はゼロに向かって収縮します。</li>
+            <li><strong>適応性</strong>：閾値は人為的に固定されるものではなく、注意メカニズムを利用したサブネットワークを通じて、入力信号の特徴に基づいて適応的に学習されます。これにより、モデルは層ごとの特徴抽出プロセスにおいて、有用な故障情報を保持しつつ、ノイズ関連の特徴を排除できます。</li>
+        </ul>
+
+        <div align="center">
+          <img width="60%" src="https://github.com/user-attachments/assets/bbb1e413-e76c-42a3-82ae-dbd7a5faee1c" />
+          <p><em>図3 (a) RBU (b) RSBU</em></p>
+        </div>
+
+        <h3 id="32-決定レベル収縮">3.2 決定レベル収縮：センターロス制約</h3>
+        <p>分類決定段階において、クラス内特徴分布の散漫さを解決するため、本手法は**交差エントロピー損失（Cross-entropy Loss）**と**センターロス（Center Loss）**を併用しています。</p>
+        <ul>
+            <li><strong>交差エントロピー損失</strong>：異なるクラスの特徴を区別するために使用されます（クラス間距離の増大）。</li>
+            <li><strong>センターロス</strong>：特徴空間内部の分布を制約するために使用されます。特徴とその対応するクラス中心との距離にペナルティを課すことで、同クラスのサンプルを特徴空間内でよりコンパクトにします（クラス内距離の減少）。</li>
+            <li><strong>効果</strong>：共同最適化により、モデルが出力する特徴は空間分布上で「クラス内がコンパクト、クラス間が分離」という特性を示し、複合故障と単一故障の重複領域を減少させます。</li>
+        </ul>
+
+        <h2 id="4-実験検証">4. 実験検証</h2>
+        <p>実験には、健全、単一故障、複合故障のデータを含むドライブトレイン診断シミュレーター（DDS）データセットを使用し、異なるSN比（SNR）のガウスホワイトノイズを追加してテストを行いました。</p>
+
+        <p><strong>表1 遊星歯車装置の健全状態カテゴリ</strong></p>
+        <table>
+            <thead>
+                <tr>
+                    <th align="left">カテゴリ</th>
+                    <th align="left">説明</th>
+                    <th align="left">ラベル</th>
+                    <th align="left">長さ</th>
+                    <th align="left">サンプル数</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td align="left">1</td><td align="left">健全 (ベアリングとギア)</td><td align="left">H</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">2</td><td align="left">歯元亀裂 (ギア)</td><td align="left">F1</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">3</td><td align="left">表面ピッチング (ギア)</td><td align="left">F2</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">4</td><td align="left">歯の破損 (ギア)</td><td align="left">F3</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">5</td><td align="left">歯の欠損 (ギア)</td><td align="left">F4</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">6</td><td align="left">ボール故障 (ベアリング)</td><td align="left">F5</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">7</td><td align="left">内輪故障 (ベアリング)</td><td align="left">F6</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">8</td><td align="left">外輪故障 (ベアリング)</td><td align="left">F7</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">9</td><td align="left">複合故障 (ベアリング)</td><td align="left">C8</td><td align="left">1024</td><td align="left">800</td></tr>
+            </tbody>
+        </table>
+
+        <p><strong>主な実験結論：</strong></p>
+        <ol>
+            <li><strong>耐ノイズ性能</strong>：-3dBから9dBの異なるノイズ環境下において、DPSLの平均診断精度は比較手法（CNN、DRN、DRSN）よりも優れていました。-3dBの強ノイズ環境下では、従来のCNN手法の精度は著しく低下しましたが、DPSLは高い識別率を維持しました。</li>
+            <li><strong>汎化能力</strong>：混同行列の分析によると、DPSLは複合故障（例：内輪＋外輪＋ボールの複合故障）とその対応する単一故障の識別においてより優れた性能を示し、誤判別率が低くなりました。</li>
+            <li><strong>可視化検証</strong>：t-SNEによる特徴可視化結果は、DPSL処理後の高層特徴が2次元空間で明確なクラスタリング効果を示し、異なる故障カテゴリ間の境界が明確であることを示しており、クラス内分散を抑制する本手法の有効性が検証されました。</li>
+        </ol>
+
+        <h2 id="5-結論">5. 結論</h2>
+        <p>本研究は、ソフト閾値ノイズ除去とセンターロス制約を組み合わせた診断フレームワークを提案しました。実験により、本手法はノイズ干渉を効果的に低減し、クラス内特徴分布を圧縮することで、強ノイズ環境下における機械複合故障の診断精度を向上させることが証明されました。</p>
+
+        <hr>
+
+        <h3 id="文献情報">文献情報</h3>
+        <p><strong>Paper Title:</strong> Mechanical compound fault diagnosis via suppressing intra-class dispersions: A deep progressive shrinkage perspective</p>
+        <p><strong>Journal:</strong> <em>Measurement</em> (Elsevier), Vol. 199, 2022</p>
+        <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.measurement.2022.111433">10.1016/j.measurement.2022.111433</a></p>
+
+    </main>
+
+</body>
+</html>

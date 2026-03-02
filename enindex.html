@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Notes: Deep Progressive Shrinkage Learning (DPSL)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; min-height: 100vh; background-color: #fff; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+        .sidebar { width: 280px; background-color: #f6f8fa; border-right: 1px solid #d0d7de; position: fixed; height: 100vh; overflow-y: auto; padding: 24px; box-sizing: border-box; top: 0; left: 0; z-index: 100; }
+        .sidebar h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #24292f; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { text-decoration: none; color: #57606a; font-size: 14px; display: block; padding: 4px 0; transition: color 0.2s; }
+        .sidebar a:hover { color: #0969da; text-decoration: underline; }
+        .sidebar .sub-menu { margin-left: 20px; margin-top: 4px; font-size: 13px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px 60px; max-width: 1000px; }
+        html { scroll-behavior: smooth; }
+        div[align="center"] { text-align: center; margin: 20px 0; }
+        table { display: block; width: 100%; overflow: auto; }
+        @media (max-width: 900px) {
+            body { display: block; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #d0d7de; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#1-background">1. Background</a></li>
+            <li><a href="#2-problem-statement">2. Problem Statement</a></li>
+            <li>
+                <a href="#3-methodology">3. Methodology: DPSL</a>
+                <ul class="sub-menu">
+                    <li><a href="#31-feature-level-shrinkage">3.1 Feature-level Shrinkage</a></li>
+                    <li><a href="#32-decision-level-shrinkage">3.2 Decision-level Shrinkage</a></li>
+                </ul>
+            </li>
+            <li><a href="#4-experimental-verification">4. Experimental Verification</a></li>
+            <li><a href="#5-conclusion">5. Conclusion</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content markdown-body">
+        
+        <h1>Paper Notes: Deep Progressive Shrinkage Learning (DPSL)</h1>
+
+        <blockquote>
+            <p>Addressing feature overlap issues in mechanical compound fault diagnosis under strong noise</p>
+            <p><strong>Paper Title:</strong> Mechanical compound fault diagnosis via suppressing intra-class dispersions: A deep progressive shrinkage perspective</p>
+            <p><strong>Journal:</strong> <em>Measurement</em> (Elsevier), Vol. 199, 2022</p>
+            <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.measurement.2022.111433">10.1016/j.measurement.2022.111433</a></p>
+        </blockquote>
+
+        <p>
+            <img src="https://img.shields.io/badge/Journal-Measurement-blue" alt="Journal"> 
+            <img src="https://img.shields.io/badge/DOI-10.1016%2Fj.measurement.2022.111433-green" alt="DOI"> 
+            <img src="https://img.shields.io/badge/Topic-Deep_Learning-orange" alt="Topic"> 
+            <img src="https://img.shields.io/badge/Topic-Fault_Diagnosis-yellow" alt="Topic">
+        </p>
+
+        <hr>
+
+        <h2 id="1-background">1. Background</h2>
+        <p>In the task of rotating machinery fault diagnosis, compound faults refer to the simultaneous occurrence of two or more single faults (e.g., both inner and outer races of a bearing are damaged). Compared to single faults, the vibration signal characteristics of compound faults are more complex. Traditional deep learning methods perform well in handling single faults, but their accuracy is often limited when identifying compound faults under strong noise interference.</p>
+
+        <h2 id="2-problem-statement">2. Problem Statement: Intra-class Dispersion & Feature Overlap</h2>
+        <p>The paper argues that the main difficulty in compound fault diagnosis lies in **inter-class overlap** in the feature space. The main reasons for this phenomenon are twofold:</p>
+        <ol>
+            <li><strong>Coupling of compound faults</strong>: Compound faults contain feature components of single faults, causing their distribution in the feature space to be highly similar to related single faults.</li>
+            <li><strong>Intra-class dispersion caused by noise</strong>: Strong background noise in industrial sites causes the feature distribution of samples of the same fault class to become loose. High intra-class dispersion leads to blurred feature boundaries between different classes, resulting in overlap.</li>
+        </ol>
+        <p>Therefore, to improve diagnostic accuracy, it is necessary to simultaneously achieve "noise elimination" and "suppression of intra-class dispersion".</p>
+
+        <div align="center">
+          <img width="90%" src="https://github.com/user-attachments/assets/d1ed046d-9ff9-49b8-bdc7-e893a54e22e1" />
+          <p><em>Fig 1. Schematic diagram of sample distribution</em></p>
+        </div>
+
+        <h2 id="3-methodology">3. Methodology: Deep Progressive Shrinkage Learning (DPSL)</h2>
+        <p>Addressing the above issues, the paper constructs a DPSL framework to optimize feature distribution through shrinkage strategies at both feature and decision levels.</p>
+
+        <div align="center">
+          <img width="60%" src="https://github.com/user-attachments/assets/b8911a48-c812-49a8-8154-5e31e9f9c67f" />
+          <p><em>Fig 2. Overall architecture of DPSL</em></p>
+        </div>
+
+        <h3 id="31-feature-level-shrinkage">3.1 Feature-level Shrinkage: Adaptive Soft Thresholding</h3>
+        <p>In the feature extraction stage, the method introduces the **Residual Shrinkage Building Unit (RSBU)**.</p>
+        <ul>
+            <li><strong>Mechanism</strong>: Utilizes the Soft Thresholding function as a non-linear layer.</li>
+            <li><strong>Principle</strong>: The soft thresholding function sets features with absolute values below the threshold to zero, which usually correspond to noise; features with absolute values above the threshold are shrunk towards zero.</li>
+            <li><strong>Adaptability</strong>: The threshold is not fixed manually but adaptively learned by a sub-network using an attention mechanism based on the input signal features. This allows the model to retain useful fault information and eliminate noise-related features during layer-by-layer feature extraction.</li>
+        </ul>
+
+        <div align="center">
+          <img width="60%" src="https://github.com/user-attachments/assets/bbb1e413-e76c-42a3-82ae-dbd7a5faee1c" />
+          <p><em>Fig 3. (a) RBU (b) RSBU</em></p>
+        </div>
+
+        <h3 id="32-decision-level-shrinkage">3.2 Decision-level Shrinkage: Center Loss Constraint</h3>
+        <p>In the classification decision stage, to solve the problem of loose intra-class feature distribution, the method jointly uses **Cross-entropy Loss** and **Center Loss**.</p>
+        <ul>
+            <li><strong>Cross-entropy Loss</strong>: Used to distinguish features of different classes (increase inter-class distance).</li>
+            <li><strong>Center Loss</strong>: Used to constrain the distribution within the feature space. It forces samples of the same class to be more compact in the feature space by penalizing the distance between features and their corresponding class centers (decrease intra-class distance).</li>
+            <li><strong>Effect</strong>: Through joint optimization, the features output by the model exhibit characteristics of "intra-class compactness and inter-class separation" in spatial distribution, thereby reducing the overlap area between compound and single faults.</li>
+        </ul>
+
+        <h2 id="4-experimental-verification">4. Experimental Verification</h2>
+        <p>The experiment used the Drivetrain Diagnosis Simulator (DDS) dataset, containing health, single fault, and compound fault data, with Gaussian white noise of different Signal-to-Noise Ratios (SNR) added for testing.</p>
+
+        <p><strong>Table 1: Health states of the planetary gearbox</strong></p>
+        <table>
+            <thead>
+                <tr>
+                    <th align="left">Class</th>
+                    <th align="left">Description</th>
+                    <th align="left">Label</th>
+                    <th align="left">Length</th>
+                    <th align="left">Samples</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td align="left">1</td><td align="left">Health (Bearing & Gear)</td><td align="left">H</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">2</td><td align="left">Root crack (Gear)</td><td align="left">F1</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">3</td><td align="left">Surface pitting (Gear)</td><td align="left">F2</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">4</td><td align="left">Broken tooth (Gear)</td><td align="left">F3</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">5</td><td align="left">Missing tooth (Gear)</td><td align="left">F4</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">6</td><td align="left">Ball fault (Bearing)</td><td align="left">F5</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">7</td><td align="left">Inner race fault (Bearing)</td><td align="left">F6</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">8</td><td align="left">Outer race fault (Bearing)</td><td align="left">F7</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">9</td><td align="left">Compound fault (Bearing)</td><td align="left">C8</td><td align="left">1024</td><td align="left">800</td></tr>
+            </tbody>
+        </table>
+
+        <p><strong>Main Experimental Conclusions:</strong></p>
+        <ol>
+            <li><strong>Noise Robustness</strong>: Under different noise environments from -3dB to 9dB, the average diagnostic accuracy of DPSL outperformed comparison methods (CNN, DRN, DRSN). Under strong noise of -3dB, the accuracy of traditional CNN dropped significantly, while DPSL maintained a high recognition rate.</li>
+            <li><strong>Generalization Ability</strong>: Confusion matrix analysis showed that DPSL performed better in distinguishing compound faults (e.g., inner race + outer race + ball compound fault) and their corresponding single faults, with lower misjudgment rates.</li>
+            <li><strong>Visual Verification</strong>: t-SNE feature visualization results showed that high-level features processed by DPSL presented clear clustering effects in 2D space, with distinct boundaries between different fault categories, verifying the effectiveness of this method in suppressing intra-class dispersion.</li>
+        </ol>
+
+        <h2 id="5-conclusion">5. Conclusion</h2>
+        <p>This study proposes a diagnostic framework combining soft thresholding denoising and center loss constraints. Experiments prove that this method effectively reduces noise interference and compresses intra-class feature distribution, thereby improving the diagnostic accuracy of mechanical compound faults under strong noise environments.</p>
+
+        <hr>
+
+        <h3 id="literature-source">Literature Source</h3>
+        <p><strong>Paper Title:</strong> Mechanical compound fault diagnosis via suppressing intra-class dispersions: A deep progressive shrinkage perspective</p>
+        <p><strong>Journal:</strong> <em>Measurement</em> (Elsevier), Vol. 199, 2022</p>
+        <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.measurement.2022.111433">10.1016/j.measurement.2022.111433</a></p>
+
+    </main>
+
+</body>
+</html>

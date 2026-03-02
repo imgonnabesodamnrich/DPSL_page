@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>논문 노트: 심층 점진적 수축 학습 (DPSL)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; min-height: 100vh; background-color: #fff; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+        .sidebar { width: 280px; background-color: #f6f8fa; border-right: 1px solid #d0d7de; position: fixed; height: 100vh; overflow-y: auto; padding: 24px; box-sizing: border-box; top: 0; left: 0; z-index: 100; }
+        .sidebar h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #24292f; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { text-decoration: none; color: #57606a; font-size: 14px; display: block; padding: 4px 0; transition: color 0.2s; }
+        .sidebar a:hover { color: #0969da; text-decoration: underline; }
+        .sidebar .sub-menu { margin-left: 20px; margin-top: 4px; font-size: 13px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px 60px; max-width: 1000px; }
+        html { scroll-behavior: smooth; }
+        div[align="center"] { text-align: center; margin: 20px 0; }
+        table { display: block; width: 100%; overflow: auto; }
+        @media (max-width: 900px) {
+            body { display: block; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #d0d7de; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>목차</h2>
+        <ul>
+            <li><a href="#1-연구-배경">1. 연구 배경</a></li>
+            <li><a href="#2-문제-설명">2. 문제 설명: 클래스 내 분산 및 특징 중첩</a></li>
+            <li>
+                <a href="#3-방법론">3. 방법론: DPSL</a>
+                <ul class="sub-menu">
+                    <li><a href="#31-특징-수준-수축">3.1 특징 수준 수축</a></li>
+                    <li><a href="#32-결정-수준-수축">3.2 결정 수준 수축</a></li>
+                </ul>
+            </li>
+            <li><a href="#4-실험-검증">4. 실험 검증</a></li>
+            <li><a href="#5-결론">5. 결론</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content markdown-body">
+        
+        <h1>논문 노트: 심층 점진적 수축 학습 (Deep Progressive Shrinkage Learning, DPSL)</h1>
+
+        <blockquote>
+            <p>강한 소음 환경에서 기계 복합 고장 진단 시 특징 중첩 문제 해결</p>
+            <p><strong>Paper Title:</strong> Mechanical compound fault diagnosis via suppressing intra-class dispersions: A deep progressive shrinkage perspective</p>
+            <p><strong>Journal:</strong> <em>Measurement</em> (Elsevier), Vol. 199, 2022</p>
+            <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.measurement.2022.111433">10.1016/j.measurement.2022.111433</a></p>
+        </blockquote>
+
+        <p>
+            <img src="https://img.shields.io/badge/Journal-Measurement-blue" alt="Journal"> 
+            <img src="https://img.shields.io/badge/DOI-10.1016%2Fj.measurement.2022.111433-green" alt="DOI"> 
+            <img src="https://img.shields.io/badge/Topic-Deep_Learning-orange" alt="Topic"> 
+            <img src="https://img.shields.io/badge/Topic-Fault_Diagnosis-yellow" alt="Topic">
+        </p>
+
+        <hr>
+
+        <h2 id="1-연구-배경">1. 연구 배경</h2>
+        <p>회전 기계의 고장 진단 작업에서 복합 고장(Compound Faults)은 두 개 이상의 단일 고장이 동시에 발생하는 경우(예: 베어링 내륜과 외륜이 동시에 손상됨)를 말합니다. 단일 고장에 비해 복합 고장의 진동 신호 특징은 훨씬 복잡합니다. 기존 딥러닝 방법은 단일 고장을 처리하는 데는 뛰어나지만, 강한 소음 간섭 하에서 복합 고장을 식별할 때는 정확도가 제한되는 경우가 많습니다.</p>
+
+        <h2 id="2-문제-설명">2. 문제 설명: 클래스 내 분산 및 특징 중첩</h2>
+        <p>논문에서는 복합 고장 진단의 주된 어려움이 특징 공간에서의 **클래스 간 중첩(Inter-class overlap)**에 있다고 주장합니다. 이 현상의 주요 원인은 두 가지입니다:</p>
+        <ol>
+            <li><strong>복합 고장의 결합성</strong>: 복합 고장은 단일 고장의 특징 성분을 포함하므로 특징 공간에서의 분포가 관련 단일 고장과 매우 유사합니다.</li>
+            <li><strong>소음으로 인한 클래스 내 분산(Intra-class dispersion)</strong>: 산업 현장의 강한 배경 소음은 동일한 고장 클래스 샘플의 특징 분포를 느슨하게 만듭니다. 높은 클래스 내 분산은 서로 다른 클래스 간의 특징 경계를 모호하게 하여 중첩을 유발합니다.</li>
+        </ol>
+        <p>따라서 진단 정확도를 높이기 위해서는 "소음 간섭 제거"와 "클래스 내 분산 억제"를 동시에 실현해야 합니다.</p>
+
+        <div align="center">
+          <img width="90%" src="https://github.com/user-attachments/assets/d1ed046d-9ff9-49b8-bdc7-e893a54e22e1" />
+          <p><em>그림 1 샘플 분포 모식도</em></p>
+        </div>
+
+        <h2 id="3-방법론">3. 방법론: 심층 점진적 수축 학습 (DPSL)</h2>
+        <p>위의 문제를 해결하기 위해 논문은 특징 수준과 결정 수준의 두 단계 수축 전략을 통해 특징 분포를 최적화하는 DPSL 프레임워크를 구축했습니다.</p>
+
+        <div align="center">
+          <img width="60%" src="https://github.com/user-attachments/assets/b8911a48-c812-49a8-8154-5e31e9f9c67f" />
+          <p><em>그림 2 DPSL 전체 아키텍처</em></p>
+        </div>
+
+        <h3 id="31-특징-수준-수축">3.1 특징 수준 수축: 적응형 소프트 임계값 노이즈 제거</h3>
+        <p>특징 추출 단계에서 이 방법은 **잔차 수축 구축 유닛(Residual Shrinkage Building Unit, RSBU)**을 도입합니다.</p>
+        <ul>
+            <li><strong>메커니즘</strong>: 소프트 임계값(Soft Thresholding) 함수를 비선형 계층으로 활용합니다.</li>
+            <li><strong>원리</strong>: 소프트 임계값 함수는 절댓값이 임계값보다 낮은 특징을 0으로 설정합니다(이들은 주로 소음에 해당함). 절댓값이 임계값보다 높은 특징은 0 쪽으로 수축됩니다.</li>
+            <li><strong>적응성</strong>: 임계값은 인위적으로 고정되는 것이 아니라, 입력 신호의 특징에 따라 주의 메커니즘을 사용하는 서브 네트워크를 통해 적응적으로 학습됩니다. 이를 통해 모델은 계층별 특징 추출 과정에서 유용한 고장 정보를 유지하면서 소음 관련 특징을 제거할 수 있습니다.</li>
+        </ul>
+
+        <div align="center">
+          <img width="60%" src="https://github.com/user-attachments/assets/bbb1e413-e76c-42a3-82ae-dbd7a5faee1c" />
+          <p><em>그림 3 (a) RBU (b) RSBU</em></p>
+        </div>
+
+        <h3 id="32-결정-수준-수축">3.2 결정 수준 수축: 중심 손실 제약</h3>
+        <p>분류 결정 단계에서 클래스 내 특징 분포가 느슨해지는 문제를 해결하기 위해, 이 방법은 **교차 엔트로피 손실(Cross-entropy Loss)**과 **중심 손실(Center Loss)**을 결합하여 사용합니다.</p>
+        <ul>
+            <li><strong>교차 엔트로피 손실</strong>: 서로 다른 클래스의 특징을 구별하는 데 사용됩니다(클래스 간 거리 증가).</li>
+            <li><strong>중심 손실</strong>: 특징 공간 내부의 분포를 제약하는 데 사용됩니다. 특징과 해당 클래스 중심 간의 거리에 페널티를 부여하여 동일 클래스 샘플이 특징 공간에서 더 촘촘하게 모이도록 합니다(클래스 내 거리 감소).</li>
+            <li><strong>효과</strong>: 공동 최적화를 통해 모델이 출력하는 특징은 공간 분포 상에서 "클래스 내 응집, 클래스 간 분리" 특성을 나타내어 복합 고장과 단일 고장의 중첩 영역을 줄입니다.</li>
+        </ul>
+
+        <h2 id="4-실험-검증">4. 실험 검증</h2>
+        <p>실험에는 건강, 단일 고장 및 복합 고장 데이터를 포함하는 구동계 진단 시뮬레이터(DDS) 데이터 세트를 사용했으며, 다양한 신호 대 잡음비(SNR)의 가우스 백색 잡음을 추가하여 테스트했습니다.</p>
+
+        <p><strong>표 1 유성 기어박스의 건강 상태 범주</strong></p>
+        <table>
+            <thead>
+                <tr>
+                    <th align="left">범주</th>
+                    <th align="left">설명</th>
+                    <th align="left">라벨</th>
+                    <th align="left">길이</th>
+                    <th align="left">샘플 수</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td align="left">1</td><td align="left">건강 (베어링 및 기어)</td><td align="left">H</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">2</td><td align="left">치근 균열 (기어)</td><td align="left">F1</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">3</td><td align="left">표면 피팅 (기어)</td><td align="left">F2</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">4</td><td align="left">치아 파손 (기어)</td><td align="left">F3</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">5</td><td align="left">치아 결손 (기어)</td><td align="left">F4</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">6</td><td align="left">볼 고장 (베어링)</td><td align="left">F5</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">7</td><td align="left">내륜 고장 (베어링)</td><td align="left">F6</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">8</td><td align="left">외륜 고장 (베어링)</td><td align="left">F7</td><td align="left">1024</td><td align="left">800</td></tr>
+                <tr><td align="left">9</td><td align="left">복합 고장 (베어링)</td><td align="left">C8</td><td align="left">1024</td><td align="left">800</td></tr>
+            </tbody>
+        </table>
+
+        <p><strong>주요 실험 결론:</strong></p>
+        <ol>
+            <li><strong>노이즈 견고성</strong>: -3dB에서 9dB까지의 다양한 노이즈 환경에서 DPSL의 평균 진단 정확도는 비교 방법(CNN, DRN, DRSN)보다 우수했습니다. -3dB의 강한 노이즈 환경에서 기존 CNN 방법의 정확도는 크게 떨어졌지만, DPSL은 높은 인식률을 유지했습니다.</li>
+            <li><strong>일반화 능력</strong>: 혼동 행렬 분석에 따르면 DPSL은 복합 고장(예: 내륜+외륜+볼 복합 고장)과 해당 단일 고장을 구별하는 데 더 뛰어난 성능을 보였으며 오판율이 낮았습니다.</li>
+            <li><strong>시각화 검증</strong>: t-SNE 특징 시각화 결과는 DPSL 처리 후의 상위 수준 특징이 2차원 공간에서 명확한 클러스터링 효과를 나타내고, 서로 다른 고장 범주 간의 경계가 명확함을 보여주어 클래스 내 분산을 억제하는 이 방법의 유효성을 검증했습니다.</li>
+        </ol>
+
+        <h2 id="5-결론">5. 결론</h2>
+        <p>이 연구는 소프트 임계값 노이즈 제거와 중심 손실 제약을 결합한 진단 프레임워크를 제안했습니다. 실험을 통해 이 방법이 소음 간섭을 효과적으로 줄이고 클래스 내 특징 분포를 압축하여 강한 소음 환경에서 기계 복합 고장의 진단 정확도를 향상시킬 수 있음이 입증되었습니다.</p>
+
+        <hr>
+
+        <h3 id="문헌-출처">문헌 출처</h3>
+        <p><strong>Paper Title:</strong> Mechanical compound fault diagnosis via suppressing intra-class dispersions: A deep progressive shrinkage perspective</p>
+        <p><strong>Journal:</strong> <em>Measurement</em> (Elsevier), Vol. 199, 2022</p>
+        <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.measurement.2022.111433">10.1016/j.measurement.2022.111433</a></p>
+
+    </main>
+
+</body>
+</html>
